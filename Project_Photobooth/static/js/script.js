@@ -1,18 +1,20 @@
 const video = document.getElementById('video');
 const singleFrameOverlay = document.getElementById('singleFrameOverlay');
 const captureBtn = document.getElementById('captureBtn');
-const countdownEl = document.getElementById('countdown');
 const flashEl = document.getElementById('flash');
 const resultModal = document.getElementById('resultModal');
 const resultImage = document.getElementById('resultImage');
 const downloadLink = document.getElementById('downloadLink');
 const retakeBtn = document.getElementById('retakeBtn');
 
+const TOTAL_PHOTOS = 8;
+const COUNTDOWN_SECONDS = 5; // Hitung mundur 5 4 3 2 1 untuk setiap foto
+
 let currentTheme = '1';
 let currentFilter = 'none';
 let isCapturing = false;
 
-// 1. Inisialisasi Kamera
+// ─── 1. Inisialisasi Kamera ───────────────────────────────────────
 async function initCamera() {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -23,16 +25,14 @@ async function initCamera() {
             }
         });
         video.srcObject = stream;
-        video.onloadedmetadata = () => {
-            video.play();
-        };
+        video.onloadedmetadata = () => video.play();
     } catch (err) {
         alert("Gagal mengakses kamera: " + err.message);
     }
 }
 initCamera();
 
-// 2. Event Listener Tema
+// ─── 2. Pilih Tema ────────────────────────────────────────────────
 document.querySelectorAll('#themeOptions .option-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('#themeOptions .option-btn').forEach(b => b.classList.remove('active'));
@@ -42,7 +42,7 @@ document.querySelectorAll('#themeOptions .option-btn').forEach(btn => {
     });
 });
 
-// 3. Event Listener Filter
+// ─── 3. Pilih Filter ─────────────────────────────────────────────
 document.querySelectorAll('#filterOptions .option-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('#filterOptions .option-btn').forEach(b => b.classList.remove('active'));
@@ -52,84 +52,106 @@ document.querySelectorAll('#filterOptions .option-btn').forEach(btn => {
     });
 });
 
-// 4. Logika Hitung Mundur
-function showCountdown(num) {
+// ─── 4. Hitung Mundur (5 → 4 → 3 → 2 → 1) ──────────────────────
+function showCountdown(startNum) {
     return new Promise(resolve => {
-        countdownEl.style.display = 'block';
-        countdownEl.innerText = num;
+        const cdEl = document.getElementById('countdown');
+        let num = startNum;
+
+        // Tampilkan angka pertama
+        cdEl.innerText = num;
+        cdEl.style.display = 'block';
 
         const timer = setInterval(() => {
             num--;
             if (num > 0) {
-                countdownEl.innerText = num;
+                cdEl.innerText = num;
             } else {
                 clearInterval(timer);
-                countdownEl.style.display = 'none';
+                cdEl.style.display = 'none';
                 resolve();
             }
         }, 1000);
     });
 }
 
-// 5. Efek Flash
+// ─── 5. Efek Flash Kamera ─────────────────────────────────────────
 function triggerFlash() {
     flashEl.style.opacity = 1;
-    setTimeout(() => { flashEl.style.opacity = 0; }, 100);
+    setTimeout(() => { flashEl.style.opacity = 0; }, 200);
 }
 
-// 6. Capture Foto
+// ─── 6. Update Progress (Tanpa Badge Visual) ──────────────────────
+function updateProgress(current, total) {
+    // Dipanggil saat iterasi foto
+}
+
+// ─── 7. Capture Satu Frame Foto ──────────────────────────────────
+function captureFrame() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 640;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    const videoRatio = vw / vh;
+    const canvasRatio = canvas.width / canvas.height;
+
+    let sWidth, sHeight, sx, sy;
+    if (videoRatio > canvasRatio) {
+        sHeight = vh; sWidth = sHeight * canvasRatio;
+        sx = (vw - sWidth) / 2; sy = 0;
+    } else {
+        sWidth = vw; sHeight = sWidth / canvasRatio;
+        sx = 0; sy = (vh - sHeight) / 2;
+    }
+
+    // Mirror effect (kamera depan selfie)
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+
+    if (currentFilter !== 'none') ctx.filter = currentFilter;
+
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png');
+}
+
+// ─── 8. Tombol MULAI 8 FOTO ──────────────────────────────────────
 captureBtn.addEventListener('click', async () => {
     if (isCapturing) return;
     isCapturing = true;
     captureBtn.disabled = true;
-    captureBtn.innerText = "SEDANG MENGAMBIL...";
+    captureBtn.innerText = "SEDANG MENGAMBIL FOTO...";
 
-    // Matikan tombol Frame saat mulai foto
-    document.querySelectorAll('#themeOptions .option-btn').forEach(btn => btn.disabled = true);
+    // Nonaktifkan tombol opsi saat sesi foto berlangsung
+    document.querySelectorAll('#themeOptions .option-btn, #filterOptions .option-btn')
+        .forEach(btn => btn.disabled = true);
 
-    let photos = [];
+    const photos = [];
 
-    for (let i = 1; i <= 4; i++) {
-        let time = (i === 1) ? 3 : 2;
-        await showCountdown(time);
+    // Mengambil 8 FOTO secara berurutan dengan hitungan mundur 5 4 3 2 1
+    for (let i = 1; i <= TOTAL_PHOTOS; i++) {
+        // Tampilkan urutan foto (Foto 1 / 8, Foto 2 / 8, dst)
+        updateProgress(i, TOTAL_PHOTOS);
+
+        // Hitung mundur 5, 4, 3, 2, 1 untuk SETIAP FOTO
+        await showCountdown(COUNTDOWN_SECONDS);
+
+        // Jepret foto + efek flash
         triggerFlash();
+        const photoData = captureFrame();
+        photos.push(photoData);
 
-        const canvas = document.createElement('canvas');
-        canvas.width = 640;
-        canvas.height = 480;
-        const ctx = canvas.getContext('2d');
-
-        const videoWidth = video.videoWidth;
-        const videoHeight = video.videoHeight;
-        const videoRatio = videoWidth / videoHeight;
-        const canvasRatio = canvas.width / canvas.height;
-
-        let sWidth, sHeight, sx, sy;
-
-        if (videoRatio > canvasRatio) {
-            sHeight = videoHeight;
-            sWidth = sHeight * canvasRatio;
-            sx = (videoWidth - sWidth) / 2;
-            sy = 0;
-        } else {
-            sWidth = videoWidth;
-            sHeight = sWidth / canvasRatio;
-            sx = 0;
-            sy = (videoHeight - sHeight) / 2;
+        // Jeda 800ms antar foto agar pengguna punya waktu bersiap posisi baru
+        if (i < TOTAL_PHOTOS) {
+            await new Promise(r => setTimeout(r, 800));
         }
-
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-
-        if (currentFilter !== 'none') {
-            ctx.filter = currentFilter;
-        }
-
-        ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-        photos.push(canvas.toDataURL('image/png'));
     }
 
-    captureBtn.innerText = "MEMPROSES...";
+    // Selesai jepret 8 foto, sembunyikan progress & kirim ke server
+    updateProgress(0, TOTAL_PHOTOS);
+    captureBtn.innerText = "MEMPROSES FOTO...";
 
     try {
         const response = await fetch('/save_photos', {
@@ -140,34 +162,26 @@ captureBtn.addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.success) {
-            // PERUBAHAN UTAMA:
-            // Menggunakan Base64 string langsung, bukan URL file
             resultImage.src = data.image_data;
             downloadLink.href = data.image_data;
-
-            // Generate nama file unik untuk download
-            const timestamp = new Date().toISOString().replace(/[-:.]/g, "");
-            downloadLink.download = `photostrip_${timestamp}.png`;
-
+            downloadLink.download = "photobooth.png";
             resultModal.style.display = 'flex';
         } else {
-            alert("Gagal memproses: " + (data.error || "Unknown error"));
+            alert("Gagal memproses foto: " + (data.error || "Unknown error"));
         }
-
     } catch (e) {
         console.error(e);
-        alert("Terjadi kesalahan koneksi.");
+        alert("Terjadi kesalahan koneksi saat mengirim foto.");
     } finally {
         isCapturing = false;
         captureBtn.disabled = false;
-        captureBtn.innerText = "📸 MULAI FOTO";
-
-        // Enable kembali theme options
-        document.querySelectorAll('#themeOptions .option-btn').forEach(btn => btn.disabled = false);
+        captureBtn.innerText = "MULAI FOTO";
+        document.querySelectorAll('#themeOptions .option-btn, #filterOptions .option-btn')
+            .forEach(btn => btn.disabled = false);
     }
 });
 
-// 7. Tombol Ulang
+// ─── 9. Tombol Foto Lagi ─────────────────────────────────────────
 retakeBtn.addEventListener('click', () => {
     resultModal.style.display = 'none';
     resultImage.src = '';

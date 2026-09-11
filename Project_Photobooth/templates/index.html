@@ -5,13 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Photobooth</title>
+    <meta name="description"
+        content="Aplikasi Photobooth 8 foto dengan hitungan mundur 5-4-3-2-1 dan frame keren. Cocok untuk HP, tablet, dan laptop!">
 
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:wght@400;600&display=swap"
         rel="stylesheet">
 
-    <!-- CSS Eksternal (Menggunakan Jinja2 url_for agar path-nya benar di Flask) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- CSS Eksternal (dengan cache buster ?v=8.3) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=8.3">
 </head>
 
 <body>
@@ -37,7 +39,6 @@
                 display: block;
             }
 
-            /* Sesuaikan posisi untuk layar kecil */
             @media (max-width: 600px) {
                 .ukmit-logo {
                     left: 12px;
@@ -47,20 +48,21 @@
                 }
             }
         </style>
+
         <!-- Area Kamera -->
         <div class="camera-section">
             <video id="video" autoplay playsinline muted></video>
             <img id="singleFrameOverlay" class="frame-overlay" src="/static/frames/frame_single_1.png"
                 alt="Frame Overlay">
             <div id="flash" class="flash"></div>
-            <div id="countdown" class="countdown-overlay">3</div>
+            <div id="countdown" class="countdown-overlay">5</div>
         </div>
 
         <!-- Area Kontrol -->
         <div class="controls-section">
 
             <div class="control-group">
-                <label>Pilih Tema</label>
+                <label>Pilih Tema Frame</label>
                 <div class="options-grid" id="themeOptions">
                     <button class="option-btn active" data-value="1">Frame 1</button>
                     <button class="option-btn" data-value="2">Frame 2</button>
@@ -81,7 +83,7 @@
                 </div>
             </div>
 
-            <button id="captureBtn">📸 MULAI FOTO</button>
+            <button id="captureBtn">MULAI FOTO</button>
         </div>
     </div>
 
@@ -92,14 +94,14 @@
             <img id="resultImage" class="result-img" src="" alt="Result">
 
             <div class="modal-buttons">
-                <a id="downloadLink" href="#" download class="btn-secondary">Download ⬇️</a>
-                <button id="retakeBtn" class="btn-outline">Foto Lagi 🔄</button>
+                <a id="downloadLink" href="#" download="photobooth.png" class="btn-secondary">Download</a>
+                <button id="retakeBtn" class="btn-outline">Foto Lagi</button>
             </div>
         </div>
     </div>
 
-    <!-- JS Eksternal -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <!-- JS Eksternal (dengan cache buster ?v=8.3) -->
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=8.3"></script>
 
 </body>
 

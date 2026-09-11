@@ -1,9 +1,13 @@
 :root {
-    --primary: #FF0055; /* Magenta Pink */
-    --secondary: #00CCFF; /* Cyan */
-    --accent: #FFDD00; /* Yellow */
+    --primary: #FF0055;
+    --secondary: #00CCFF;
+    --accent: #FFDD00;
     --dark: #1a1a1a;
     --light: #ffffff;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -15,11 +19,12 @@ body {
     margin: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
 }
 
+/* --- Layout Container --- */
 .container {
     display: grid;
     grid-template-columns: 1fr 350px;
@@ -62,7 +67,7 @@ video {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transform: scaleX(-1); /* Mirror effect */
+    transform: scaleX(-1);
 }
 
 .frame-overlay {
@@ -80,7 +85,7 @@ video {
     opacity: 0;
     pointer-events: none;
     z-index: 20;
-    transition: opacity 0.1s;
+    transition: opacity 0.15s;
 }
 
 /* Countdown */
@@ -94,12 +99,42 @@ video {
     text-shadow: 0 0 20px black, 5px 5px var(--primary);
     z-index: 30;
     display: none;
-    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes popIn {
-    from { transform: translate(-50%, -50%) scale(0); }
-    to { transform: translate(-50%, -50%) scale(1); }
+    from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* Photo Progress Indicator */
+.photo-progress {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.72);
+    color: var(--accent);
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    letter-spacing: 1px;
+    padding: 6px 20px;
+    border-radius: 50px;
+    border: 2px solid var(--accent);
+    z-index: 30;
+    white-space: nowrap;
+    animation: fadeIn 0.3s ease;
+}
+
+.progress-num {
+    color: var(--primary);
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 /* --- Controls Area --- */
@@ -124,7 +159,7 @@ video {
 /* Button Grids for Themes/Filters */
 .options-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 8px;
 }
 
@@ -150,6 +185,12 @@ video {
     box-shadow: 0 4px 0 rgba(0,0,0,0.2);
 }
 
+.option-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Main Action Button */
 #captureBtn {
     margin-top: auto;
@@ -165,7 +206,11 @@ video {
     transition: all 0.1s;
 }
 
-#captureBtn:active {
+#captureBtn:hover:not(:disabled) {
+    background: #ffe833;
+}
+
+#captureBtn:active:not(:disabled) {
     transform: translateY(4px);
     box-shadow: 0 1px 0 #b39b00;
 }
@@ -181,12 +226,13 @@ video {
 .modal {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.92);
     z-index: 100;
     display: none;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    padding: 16px;
 }
 
 .modal-content {
@@ -195,9 +241,10 @@ video {
     border-radius: 20px;
     border: 4px solid var(--secondary);
     text-align: center;
-    max-width: 90%;
-    max-height: 90vh;
+    max-width: 95%;
+    max-height: 95vh;
     overflow-y: auto;
+    width: 100%;
 }
 
 .result-img {
@@ -206,41 +253,132 @@ video {
     border-radius: 10px;
     margin-bottom: 20px;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    max-height: 60vh;
+    max-height: 65vh;
 }
 
 .modal-buttons {
     display: flex;
     gap: 15px;
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .btn-secondary {
     background: var(--secondary);
     color: #000;
-    padding: 10px 25px;
+    padding: 12px 28px;
     border-radius: 50px;
     text-decoration: none;
     font-weight: bold;
     border: none;
     cursor: pointer;
+    font-size: 1rem;
+    transition: opacity 0.2s;
 }
+
+.btn-secondary:hover { opacity: 0.85; }
 
 .btn-outline {
     background: transparent;
     border: 2px solid var(--light);
     color: var(--light);
-    padding: 10px 25px;
+    padding: 12px 28px;
     border-radius: 50px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 1rem;
+    transition: background 0.2s;
 }
 
-/* --- Mobile Responsive --- */
+.btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
+/* Tablet landscape / small desktop (769–1024px) */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .container {
+        grid-template-columns: 1fr 280px;
+        max-width: 900px;
+    }
+
+    h1 { font-size: 2.6rem; }
+
+    .countdown-overlay { font-size: 6rem; }
+}
+
+/* Tablet portrait & mobile (≤768px) */
 @media (max-width: 768px) {
+    body {
+        padding: 12px;
+    }
+
     .container {
         grid-template-columns: 1fr;
-    }   
-    
-    h1 { font-size: 2.5rem; }
+        padding: 14px;
+        gap: 14px;
+        border-width: 3px;
+        box-shadow: 6px 6px 0px var(--primary);
+    }
+
+    h1 {
+        font-size: 2.2rem;
+        margin-bottom: 10px;
+    }
+
+    .camera-section {
+        aspect-ratio: 4/3;
+        border-radius: 10px;
+    }
+
+    .countdown-overlay { font-size: 5rem; }
+
+    .photo-progress {
+        font-size: 1.1rem;
+        padding: 5px 16px;
+        bottom: 10px;
+    }
+
+    .progress-num { font-size: 1.5rem; }
+
+    .options-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+
+    .option-btn {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+
+    #captureBtn {
+        font-size: 1.3rem;
+        padding: 13px;
+    }
+
+    .modal-content {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .result-img { max-height: 55vh; }
+}
+
+/* Small phone (≤420px) */
+@media (max-width: 420px) {
+    body { padding: 10px; }
+
+    h1 { font-size: 1.7rem; }
+
+    .options-grid { grid-template-columns: repeat(2, 1fr); }
+
+    #captureBtn { font-size: 1.1rem; padding: 12px; }
+
+    .btn-secondary, .btn-outline {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+
+    .countdown-overlay { font-size: 4rem; }
 }
