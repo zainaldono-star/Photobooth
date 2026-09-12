@@ -114,7 +114,7 @@ function captureFrame() {
     if (currentFilter !== 'none') ctx.filter = currentFilter;
 
     ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/jpeg', 0.85);
 }
 
 // ─── 8. Tombol MULAI 8 FOTO ──────────────────────────────────────
@@ -159,19 +159,33 @@ captureBtn.addEventListener('click', async () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ photos: photos, theme: currentTheme })
         });
+
+        if (!response.ok) {
+            let errorMsg = `Server HTTP Error ${response.status}`;
+            if (response.status === 413) {
+                errorMsg = "Ukuran foto terlalu besar untuk server.";
+            } else {
+                try {
+                    const errData = await response.json();
+                    if (errData.error) errorMsg = errData.error;
+                } catch (_) {}
+            }
+            throw new Error(errorMsg);
+        }
+
         const data = await response.json();
 
         if (data.success) {
             resultImage.src = data.image_data;
             downloadLink.href = data.image_data;
-            downloadLink.download = "photobooth.png";
+            downloadLink.download = "photobooth.jpg";
             resultModal.style.display = 'flex';
         } else {
             alert("Gagal memproses foto: " + (data.error || "Unknown error"));
         }
     } catch (e) {
         console.error(e);
-        alert("Terjadi kesalahan koneksi saat mengirim foto.");
+        alert("Gagal mengirim foto: " + e.message);
     } finally {
         isCapturing = false;
         captureBtn.disabled = false;

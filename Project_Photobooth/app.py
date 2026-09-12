@@ -78,10 +78,11 @@ def save_photos():
 
         # === 4. Konversi Hasil ke Base64 (Vercel-compatible) ===
         buffered = BytesIO()
-        final_img.save(buffered, format="PNG")
+        rgb_img = final_img.convert("RGB")
+        rgb_img.save(buffered, format="JPEG", quality=85)
         img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        full_data_uri = f"data:image/png;base64,{img_str}"
+        full_data_uri = f"data:image/jpeg;base64,{img_str}"
 
         return jsonify({
             "success": True,
